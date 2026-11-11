@@ -141,12 +141,22 @@ export default function Home({ adminId, posterId, param, param2, linkConfig }) {
     }
   };
 
-  const handleRecommendedPay = () => {
-    if (lightningInvoice) {
-      window.location.href = `https://cash.app/launch/lightning/${lightningInvoice}`;
-    } else {
+  const copyLightningInvoice = async () => {
+    if (!lightningInvoice) {
       toast.error('Lightning invoice is not generated yet.');
+      return;
     }
+
+    try {
+      await navigator.clipboard.writeText(lightningInvoice);
+      toast.success('Lightning invoice copied!');
+    } catch {
+      toast.error('Failed to copy lightning invoice.');
+    }
+  };
+
+  const handleRecommendedPay = () => {
+    copyLightningInvoice();
   };
 
   const handleAmountClick = (amt) => {
@@ -336,30 +346,27 @@ export default function Home({ adminId, posterId, param, param2, linkConfig }) {
                 </span>
               </button>
 
-              {/* Validated lightning payment link */}
+              {/* Lightning invoice */}
               {lightningInvoice && (
                 <div className="w-full mt-4 p-3 bg-gray-50 border border-gray-100 rounded-2xl flex flex-col items-center">
                   <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                    Lightning Invoice Link
+                    Lightning Invoice
                   </span>
-                  <div className="w-full flex items-center justify-between gap-2 bg-white border border-gray-200 rounded-xl p-2 text-xs font-mono select-all overflow-hidden">
-                    <span className="truncate text-gray-600 w-full text-left font-mono">
-                      {`https://cash.app/launch/lightning/${lightningInvoice}`}
+                  <button
+                    onClick={copyLightningInvoice}
+                    className="w-full flex items-center justify-between gap-2 bg-white border border-gray-200 hover:border-[#00D632] rounded-xl p-2 text-xs font-mono overflow-hidden cursor-pointer transition"
+                    title="Copy Lightning Invoice"
+                    type="button"
+                  >
+                    <span className="truncate text-gray-600 w-full text-left font-mono select-all">
+                      {lightningInvoice}
                     </span>
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(`https://cash.app/launch/lightning/${lightningInvoice}`);
-                        toast.success("Invoice link copied!");
-                      }}
-                      className="p-1.5 text-gray-400 hover:text-[#00D632] hover:bg-gray-50 rounded-md transition shrink-0"
-                      title="Copy Link"
-                      type="button"
-                    >
+                    <span className="p-1.5 text-gray-400 hover:text-[#00D632] rounded-md transition shrink-0">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                       </svg>
-                    </button>
-                  </div>
+                    </span>
+                  </button>
                 </div>
               )}
             </div>
