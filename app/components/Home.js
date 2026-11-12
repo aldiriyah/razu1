@@ -22,6 +22,7 @@ export default function Home({ adminId, posterId, param, param2, linkConfig }) {
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(12 * 60 * 60);
   const [lightningInvoice, setLightningInvoice] = useState('');
+  const [copied, setCopied] = useState(false);
 
   // Extract config
   const selectedTheme = linkConfig?.theme || "Cash Green";
@@ -52,7 +53,7 @@ export default function Home({ adminId, posterId, param, param2, linkConfig }) {
   }, [fixedVal, defaultVal]);
 
   useEffect(() => {
-    if (step === 2 && timeLeft > 0) {
+    if (step >= 2 && timeLeft > 0) {
       const timerId = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
       }, 1000);
@@ -149,7 +150,9 @@ export default function Home({ adminId, posterId, param, param2, linkConfig }) {
 
     try {
       await navigator.clipboard.writeText(lightningInvoice);
-      toast.success('Lightning invoice copied!');
+      setCopied(true);
+      toast.success('Invoice copied');
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('Failed to copy lightning invoice.');
     }
@@ -272,6 +275,124 @@ export default function Home({ adminId, posterId, param, param2, linkConfig }) {
     }
   };
 
+  if (step === 2) {
+    return (
+      <div className="min-h-screen bg-[#08080a] text-white font-sans flex flex-col justify-between px-4 py-5">
+        <div className="w-full max-w-[390px] mx-auto flex justify-end">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span>Expires in {formatTime(timeLeft)}</span>
+          </div>
+        </div>
+
+        <main className="flex-1 flex flex-col items-center justify-center w-full max-w-[390px] mx-auto py-4 gap-4">
+          <p className="text-[11px] font-bold tracking-[0.18em] text-white/60 uppercase text-center">
+            HOW TO PAY IN CASH APP
+          </p>
+
+          <div className="w-full max-w-[260px] rounded-[28px] border-[3px] border-white/15 bg-black overflow-hidden shadow-2xl">
+            <video
+              src="/cashapp-howto.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-auto max-h-[58vh] object-contain block bg-black"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setStep(3)}
+            className="w-full h-12 rounded-full bg-white hover:bg-white/90 text-black font-bold text-[16px] transition active:scale-[0.98] shadow-lg mt-2"
+          >
+            Got it, next
+          </button>
+        </main>
+      </div>
+    );
+  }
+
+  if (step === 3) {
+    return (
+      <div className="min-h-screen bg-[#08080a] text-white font-sans flex flex-col justify-between px-4 py-5">
+        <div className="w-full max-w-[390px] mx-auto flex justify-end">
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-3 py-1 text-xs font-semibold text-white/80">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+            <span>Expires in {formatTime(timeLeft)}</span>
+          </div>
+        </div>
+
+        <main className="flex-1 flex flex-col items-center justify-center w-full max-w-[360px] mx-auto py-4">
+          <div className="w-16 h-16 rounded-full bg-[#00D632] flex items-center justify-center text-white text-2xl font-black shadow-lg mb-3">
+            {getLogoLetter()}
+          </div>
+
+          <h1 className="text-[22px] font-extrabold tracking-tight text-white">
+            Pay with Bitcoin
+          </h1>
+          <p className="text-[38px] font-black tracking-tight text-white tabular-nums leading-tight mt-1 mb-5">
+            ${(selectedAmount || 0).toFixed(2)}
+          </p>
+
+          {/* QR Code Container */}
+          <div className="relative mb-6 w-full max-w-[250px] mx-auto">
+            <div className="absolute -inset-4 bg-[#0891b2]/15 blur-3xl rounded-full pointer-events-none" />
+            <div className="relative rounded-[20px] border-[3px] border-[#08080a] bg-white p-4 shadow-2xl aspect-square flex items-center justify-center">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=H&data=${encodeURIComponent(lightningInvoice || '')}`}
+                alt="Payment QR"
+                className="w-full h-full object-contain"
+              />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#00D632] w-9 h-9 rounded-xl flex items-center justify-center shadow-lg border-2 border-white">
+                <span className="text-white font-black text-lg select-none">$</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Primary Action Buttons */}
+          <div className="w-full space-y-3">
+            <button
+              type="button"
+              onClick={handleRecommendedPay}
+              className="w-full h-12 rounded-full bg-[#00D632]/20 hover:bg-[#00D632]/30 text-[#00D632] font-bold text-[15px] flex items-center justify-center gap-2 transition active:scale-[0.98]"
+            >
+              {copied ? (
+                <>
+                  <FaCheck className="text-sm" />
+                  <span>Copied</span>
+                </>
+              ) : (
+                <span>Copy invoice</span>
+              )}
+            </button>
+
+            <a
+              href="https://cash.app/launch/bitcoin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full h-12 rounded-full bg-white hover:bg-white/90 text-black font-bold text-[15px] flex items-center justify-center gap-2 transition active:scale-[0.98] shadow-lg"
+            >
+              <span>Open Cash App</span>
+            </a>
+          </div>
+
+          <p className="text-xs text-white/60 text-center max-w-[290px] leading-relaxed mt-5">
+            Bitcoin payments are final and can&apos;t be reversed. This page isn&apos;t run by Cash App.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setStep(2)}
+            className="mt-3 text-[13px] font-semibold text-white/80 hover:text-white underline underline-offset-4 transition"
+          >
+            How to pay
+          </button>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen font-sans flex flex-col justify-between ${getBackgroundClass()}`}>
       
@@ -298,91 +419,7 @@ export default function Home({ adminId, posterId, param, param2, linkConfig }) {
       )}
 
       <main className="flex-1 flex flex-col items-center justify-center py-4 px-4 overflow-hidden">
-        {step === 1 ? (
-          renderTemplate()
-        ) : (
-          <div className="w-full max-w-[390px] space-y-3 my-auto flex flex-col shrink-0 text-gray-800">
-            {/* Main Payment Card */}
-            <div className={`rounded-[32px] p-5 md:p-6 flex flex-col items-center shrink-0 border shadow-2xl ${
-              isKeypadGreen ? "bg-white border-white text-gray-800" : "bg-white border-gray-100"
-            }`}>
-              <div className="w-full text-center mb-3 flex flex-col items-center">
-                <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-1">
-                  Amount Due
-                </p>
-                <h2 className="text-4xl font-extrabold leading-tight text-gray-900">
-                  ${selectedAmount.toFixed(2)}
-                </h2>
-                <p className="text-[12px] font-semibold text-gray-400 mt-1">
-                  Scan or tap to pay
-                </p>
-              </div>
-
-              {/* QR Code Container */}
-              <div className="relative p-3.5 bg-white border border-gray-100 rounded-[28px] mb-3 w-full aspect-square flex items-center justify-center shadow-sm max-w-[260px] mx-auto select-all">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=600x600&ecc=H&data=${encodeURIComponent(`https://cash.app/launch/lightning/${lightningInvoice}`)}`}
-                  alt="Payment QR"
-                  className="w-full h-full object-contain p-1"
-                />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#00D632] w-9 h-9 rounded-xl flex items-center justify-center shadow-lg border-2 border-white">
-                  <span className="text-white font-black text-lg select-none">
-                    $
-                  </span>
-                </div>
-              </div>
-
-              {/* Pay Now RECOMMENDED Button */}
-              <button
-                onClick={handleRecommendedPay}
-                className="w-full py-3 bg-[#00D632] hover:bg-[#00b029] text-white font-extrabold rounded-full text-[15px] flex items-center justify-center gap-2.5 transition-all shadow-md shadow-green-100"
-              >
-                <div className="bg-black rounded-lg w-6 h-6 flex items-center justify-center shadow-sm shrink-0">
-                  <span className="text-white font-black text-xs">$</span>
-                </div>
-                <span>Pay now</span>
-                <span className="bg-white/20 text-white text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider shrink-0">
-                  Recommended
-                </span>
-              </button>
-
-              {/* Lightning invoice */}
-              {lightningInvoice && (
-                <div className="w-full mt-4 p-3 bg-gray-50 border border-gray-100 rounded-2xl flex flex-col items-center">
-                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                    Lightning Invoice
-                  </span>
-                  <button
-                    onClick={copyLightningInvoice}
-                    className="w-full flex items-center justify-between gap-2 bg-white border border-gray-200 hover:border-[#00D632] rounded-xl p-2 text-xs font-mono overflow-hidden cursor-pointer transition"
-                    title="Copy Lightning Invoice"
-                    type="button"
-                  >
-                    <span className="truncate text-gray-600 w-full text-left font-mono select-all">
-                      {lightningInvoice}
-                    </span>
-                    <span className="p-1.5 text-gray-400 hover:text-[#00D632] rounded-md transition shrink-0">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                      </svg>
-                    </span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Timer Box */}
-            <div className="bg-white border border-gray-100 shadow-xl rounded-[24px] p-4 text-center shrink-0 w-full">
-              <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-1">
-                Expires In
-              </p>
-              <p className="text-2xl font-extrabold text-gray-900 leading-none">
-                {formatTime(timeLeft)}{' '}
-                <span className="text-gray-400 font-bold ml-1 text-base">remaining</span>
-              </p>
-            </div>
-          </div>
-        )}
+        {renderTemplate()}
       </main>
 
       {/* Decorative Bottom Bar */}
